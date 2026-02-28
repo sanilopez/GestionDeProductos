@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRUD Productos — Soi Sani Lopez</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    :root{
+      --bg:#f8fafc;--white:#fff;--primary:#0f172a;--accent:#3b82f6;
+      --accent-light:#eff6ff;--success:#10b981;--danger:#ef4444;--warning:#f59e0b;
+      --text:#0f172a;--muted:#64748b;--border:#e2e8f0;
+      --shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg:0 10px 40px rgba(0,0,0,0.1);
+    }
+    body{background:var(--bg);font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);min-height:100vh;}
+
+    /* TOPBAR */
+    .topbar{background:var(--primary);color:#fff;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+    .topbar h1{font-size:1.2rem;font-weight:700;}
+    .topbar span{font-size:0.8rem;color:#94a3b8;font-family:'JetBrains Mono',monospace;}
+
+    /* LAYOUT */
+    .container{max-width:1100px;margin:2rem auto;padding:0 1.5rem;}
+
+    /* STATS BAR */
+    .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;}
+    .stat-card{background:var(--white);border-radius:14px;padding:1.2rem 1.5rem;box-shadow:var(--shadow);border:1px solid var(--border);}
+    .stat-card .n{font-size:1.8rem;font-weight:800;color:var(--accent);}
+    .stat-card .l{font-size:0.8rem;color:var(--muted);margin-top:0.2rem;}
+
+    /* MAIN GRID */
+    .main-grid{display:grid;grid-template-columns:340px 1fr;gap:1.5rem;align-items:start;}
+
+    /* FORM */
+    .form-card{background:var(--white);border-radius:16px;padding:1.8rem;box-shadow:var(--shadow);border:1px solid var(--border);}
+    .form-card h2{font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;padding-bottom:0.8rem;border-bottom:2px solid var(--accent-light);}
+    .form-group{margin-bottom:1.1rem;}
+    .form-group label{display:block;font-size:0.82rem;font-weight:600;color:var(--muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.05em;}
+    .form-group input,.form-group select,.form-group textarea{
+      width:100%;padding:0.75rem 1rem;border:2px solid var(--border);border-radius:10px;
+      font-family:'Plus Jakarta Sans',sans-serif;font-size:0.95rem;outline:none;transition:border-color 0.2s;
+      background:var(--bg);
+    }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:var(--white);}
+    .form-group textarea{resize:vertical;min-height:80px;}
+    .btn{width:100%;padding:0.85rem;border:none;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .btn-add{background:var(--accent);color:#fff;}
+    .btn-add:hover{background:#2563eb;}
+    .btn-cancel{background:var(--bg);color:var(--muted);border:2px solid var(--border);margin-top:0.5rem;}
+    .btn-cancel:hover{border-color:var(--danger);color:var(--danger);}
+
+    /* TABLE */
+    .table-card{background:var(--white);border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;}
+    .table-header{padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+    .table-header h2{font-size:1.1rem;font-weight:700;}
+    .search-box{padding:0.5rem 1rem;border:2px solid var(--border);border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.9rem;outline:none;width:200px;transition:border-color 0.2s;}
+    .search-box:focus{border-color:var(--accent);}
+
+    table{width:100%;border-collapse:collapse;}
+    thead th{padding:0.75rem 1rem;text-align:left;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);background:#f8fafc;border-bottom:1px solid var(--border);}
+    tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s;}
+    tbody tr:hover{background:#f8fafc;}
+    tbody tr:last-child{border-bottom:none;}
+    td{padding:0.9rem 1rem;font-size:0.93rem;vertical-align:middle;}
+    .td-name{font-weight:600;}
+    .td-price{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--success);}
+    .td-stock span{padding:0.2rem 0.6rem;border-radius:6px;font-size:0.8rem;font-weight:600;}
+    .stock-ok{background:#d1fae5;color:#065f46;}
+    .stock-low{background:#fef3c7;color:#92400e;}
+    .stock-out{background:#fee2e2;color:#991b1b;}
+    .td-cat span{padding:0.2rem 0.6rem;background:var(--accent-light);color:var(--accent);border-radius:6px;font-size:0.8rem;font-weight:600;}
+    .actions{display:flex;gap:0.4rem;}
+    .action-btn{width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+    .btn-edit{background:#eff6ff;color:var(--accent);}
+    .btn-edit:hover{background:var(--accent);color:#fff;}
+    .btn-del{background:#fee2e2;color:var(--danger);}
+    .btn-del:hover{background:var(--danger);color:#fff;}
+    .empty-row td{text-align:center;padding:3rem;color:var(--muted);}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:2rem;right:2rem;background:var(--primary);color:#fff;padding:0.8rem 1.5rem;border-radius:10px;font-size:0.9rem;font-weight:600;transform:translateY(100px);opacity:0;transition:all 0.3s;z-index:999;}
+    .toast.show{transform:translateY(0);opacity:1;}
+
+    @media(max-width:800px){.main-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📦 Gestión de Productos</h1>
+  <span>Soi Sani Lopez Serrano</span>
+</div>
+
+<div class="container">
+  <div class="stats-bar">
+    <div class="stat-card"><div class="n" id="totalProd">0</div><div class="l">Productos</div></div>
+    <div class="stat-card"><div class="n" id="totalCat">0</div><div class="l">Categorías</div></div>
+    <div class="stat-card"><div class="n" id="stockBajo">0</div><div class="l">Stock bajo</div></div>
+    <div class="stat-card"><div class="n" id="valorTotal">S/0</div><div class="l">Valor en stock</div></div>
+  </div>
+
+  <div class="main-grid">
+    <!-- FORMULARIO -->
+    <div class="form-card">
+      <h2 id="formTitle">➕ Nuevo Producto</h2>
+      <input type="hidden" id="editId"/>
+      <div class="form-group">
+        <label>Nombre del producto</label>
+        <input type="text" id="fNombre" placeholder="Ej: Laptop HP 15"/>
+      </div>
+      <div class="form-group">
+        <label>Categoría</label>
+        <select id="fCategoria">
+          <option value="">Seleccionar...</option>
+          <option>Electrónica</option><option>Ropa</option><option>Alimentos</option>
+          <option>Hogar</option><option>Deportes</option><option>Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Precio (S/.)</label>
+        <input type="number" id="fPrecio" placeholder="0.00" min="0" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label>Stock (unidades)</label>
+        <input type="number" id="fStock" placeholder="0" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="fDesc" placeholder="Descripción breve del producto..."></textarea>
+      </div>
+      <button class="btn btn-add" onclick="saveProduct()">Guardar Producto</button>
+      <button class="btn btn-cancel" id="btnCancel" style="display:none" onclick="cancelEdit()">Cancelar edición</button>
+    </div>
+
+    <!-- TABLA -->
+    <div class="table-card">
+      <div class="table-header">
+        <h2>Lista de Productos</h2>
+        <input class="search-box" type="text" placeholder="Buscar..." oninput="render(this.value)"/>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let products = JSON.parse(localStorage.getItem('products_crud') || '[]');
+
+  function save() { localStorage.setItem('products_crud', JSON.stringify(products)); }
+
+  function toast(msg, color = '#0f172a') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = color;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function saveProduct() {
+    const id = document.getElementById('editId').value;
+    const nombre = document.getElementById('fNombre').value.trim();
+    const cat = document.getElementById('fCategoria').value;
+    const precio = parseFloat(document.getElementById('fPrecio').value);
+    const stock = parseInt(document.getElementById('fStock').value);
+    const desc = document.getElementById('fDesc').value.trim();
+
+    if (!nombre || !cat || isNaN(precio) || isNaN(stock)) {
+      toast('⚠️ Completa todos los campos', '#f59e0b'); return;
+    }
+
+    if (id) {
+      const p = products.find(p => p.id == id);
+      Object.assign(p, { nombre, cat, precio, stock, desc });
+      toast('✅ Producto actualizado', '#10b981');
+      cancelEdit();
+    } else {
+      products.push({ id: Date.now(), nombre, cat, precio, stock, desc });
+      toast('✅ Producto agregado', '#10b981');
+      clearForm();
+    }
+    save(); render();
+  }
+
+  function editProduct(id) {
+    const p = products.find(p => p.id === id);
+    document.getElementById('editId').value = id;
+    document.getElementById('fNombre').value = p.nombre;
+    document.getElementById('fCategoria').value = p.cat;
+    document.getElementById('fPrecio').value = p.precio;
+    document.getElementById('fStock').value = p.stock;
+    document.getElementById('fDesc').value = p.desc;
+    document.getElementById('formTitle').textContent = '✏️ Editar Producto';
+    document.getElementById('btnCancel').style.display = 'block';
+    document.querySelector('.btn-add').textContent = 'Actualizar';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function deleteProduct(id) {
+    if (!confirm('¿Eliminar este producto?')) return;
+    products = products.filter(p => p.id !== id);
+    save(); render();
+    toast('🗑 Producto eliminado', '#ef4444');
+  }
+
+  function cancelEdit() {
+    clearForm();
+    document.getElementById('editId').value = '';
+    document.getElementById('formTitle').textContent = '➕ Nuevo Producto';
+    document.getElementById('btnCancel').style.display = 'none';
+    document.querySelector('.btn-add').textContent = 'Guardar Producto';
+  }
+
+  function clearForm() {
+    ['fNombre','fPrecio','fStock','fDesc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fCategoria').value = '';
+  }
+
+  function stockBadge(s) {
+    if (s === 0) return `<span class="stock-out">Sin stock</span>`;
+    if (s <= 5) return `<span class="stock-low">${s} bajo</span>`;
+    return `<span class="stock-ok">${s} disp.</span>`;
+  }
+
+  function render(search = '') {
+    const q = search.toLowerCase();
+    const filtered = products.filter(p =>
+      p.nombre.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q)
+    );
+    const tbody = document.getElementById('tableBody');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">📭 No se encontraron productos</td></tr>';
+    } else {
+      tbody.innerHTML = filtered.map((p, i) => `
+        <tr>
+          <td style="color:var(--muted);font-size:0.8rem;font-family:'JetBrains Mono'">${String(i+1).padStart(3,'0')}</td>
+          <td class="td-name">${esc(p.nombre)}<br/><small style="color:var(--muted);font-weight:400;">${esc(p.desc||'')}</small></td>
+          <td class="td-cat"><span>${esc(p.cat)}</span></td>
+          <td class="td-price">S/ ${p.precio.toFixed(2)}</td>
+          <td class="td-stock">${stockBadge(p.stock)}</td>
+          <td><div class="actions">
+            <button class="action-btn btn-edit" onclick="editProduct(${p.id})" title="Editar">✏️</button>
+            <button class="action-btn btn-del" onclick="deleteProduct(${p.id})" title="Eliminar">🗑</button>
+          </div></td>
+        </tr>
+      `).join('');
+    }
+
+    // Stats
+    document.getElementById('totalProd').textContent = products.length;
+    const cats = new Set(products.map(p => p.cat));
+    document.getElementById('totalCat').textContent = cats.size;
+    document.getElementById('stockBajo').textContent = products.filter(p => p.stock <= 5).length;
+    const valor = products.reduce((sum, p) => sum + p.precio * p.stock, 0);
+    document.getElementById('valorTotal').textContent = 'S/' + valor.toFixed(0);
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // Datos de ejemplo
+  if (products.length === 0) {
+    products = [
+      { id:1, nombre:'Laptop HP 15', cat:'Electrónica', precio:2499.99, stock:8, desc:'Intel i5, 8GB RAM, 512GB SSD' },
+      { id:2, nombre:'Teclado mecánico', cat:'Electrónica', precio:189.90, stock:3, desc:'RGB, switches azules' },
+      { id:3, nombre:'Polo deportivo', cat:'Ropa', precio:45.00, stock:25, desc:'Talla M, varios colores' },
+      { id:4, nombre:'Silla gamer', cat:'Hogar', precio:399.00, stock:0, desc:'Ergonómica, reclinable' },
+    ];
+    save();
+  }
+
+  render();
+</script>
+</body>
+</html>
